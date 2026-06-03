@@ -27,6 +27,8 @@ from ._cu_converter import (
 )
 from ._epub_converter import EpubConverter
 from ._csv_converter import CsvConverter
+from ._gemini_converter import GeminiConverter
+from ._notebooklm_converter import NotebookLMConverter
 
 __all__ = [
     "PlainTextConverter",
@@ -51,4 +53,6 @@ __all__ = [
     "ContentUnderstandingFileType",
     "EpubConverter",
     "CsvConverter",
+    "GeminiConverter",
+    "NotebookLMConverter",
 ]

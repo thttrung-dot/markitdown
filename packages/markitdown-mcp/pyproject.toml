@@ -28,6 +28,11 @@ dependencies = [
   "markitdown[all]>=0.1.1,<0.2.0",
 ]
 
+[project.optional-dependencies]
+gemini = ["google-genai"]
+notebooklm = ["google-genai"]
+google = ["google-genai"]
+
 [project.urls]
 Documentation = "https://github.com/microsoft/markitdown#readme"
 Issues = "https://github.com/microsoft/markitdown/issues"

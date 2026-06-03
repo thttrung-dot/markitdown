@@ -40,6 +40,8 @@ from .converters import (
     DocumentIntelligenceConverter,
     ContentUnderstandingConverter,
     CsvConverter,
+    GeminiConverter,
+    NotebookLMConverter,
 )
 
 from ._base_converter import DocumentConverter, DocumentConverterResult
@@ -203,6 +205,14 @@ class MarkItDown:
             self.register_converter(OutlookMsgConverter())
             self.register_converter(EpubConverter())
             self.register_converter(CsvConverter())
+
+            # Register NotebookLM converter (handles notebooklm.google.com URLs)
+            self.register_converter(NotebookLMConverter())
+
+            # Register Gemini image converter when a Gemini API key is available
+            gemini_api_key = kwargs.get("gemini_api_key") or os.environ.get("GOOGLE_API_KEY")
+            if gemini_api_key:
+                self.register_converter(GeminiConverter())
 
             # Register Document Intelligence converter at the top of the stack if endpoint is provided
             docintel_endpoint = kwargs.get("docintel_endpoint")

@@ -23,6 +23,46 @@ async def convert_to_markdown(uri: str) -> str:
     return MarkItDown(enable_plugins=check_plugins_enabled()).convert_uri(uri).markdown
 
 
+@mcp.tool()
+async def gemini_analyze(uri: str, prompt: str = "Describe this document in detail.") -> str:
+    """
+    Analyze an image or document using Google Gemini Vision.
+    Requires GOOGLE_API_KEY environment variable or the gemini_api_key parameter.
+    Accepts any http:, https:, file:, or data: URI pointing to an image (JPEG, PNG, GIF, WebP).
+    """
+    api_key = os.environ.get("GOOGLE_API_KEY", "")
+    if not api_key:
+        return (
+            "Error: GOOGLE_API_KEY environment variable is not set. "
+            "Set it to your Google AI Studio API key to use Gemini."
+        )
+    md = MarkItDown(
+        enable_plugins=check_plugins_enabled(),
+        gemini_api_key=api_key,
+        llm_prompt=prompt,
+    ).convert_uri(uri).markdown
+    return md or "No content extracted."
+
+
+@mcp.tool()
+async def notebooklm_to_markdown(url: str) -> str:
+    """
+    Extract and convert a Google NotebookLM notebook to markdown.
+    Accepts a notebooklm.google.com URL.
+    For full content access set GOOGLE_API_KEY (NotebookLM API) or NOTEBOOKLM_API_KEY.
+    Without credentials, public metadata is extracted from the page.
+    """
+    api_key = (
+        os.environ.get("NOTEBOOKLM_API_KEY")
+        or os.environ.get("GOOGLE_API_KEY", "")
+    )
+    md = MarkItDown(
+        enable_plugins=check_plugins_enabled(),
+        notebooklm_api_key=api_key or None,
+    ).convert_uri(url).markdown
+    return md or "No content extracted."
+
+
 def check_plugins_enabled() -> bool:
     return os.getenv("MARKITDOWN_ENABLE_PLUGINS", "false").strip().lower() in (
         "true",
