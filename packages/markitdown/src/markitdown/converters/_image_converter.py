@@ -1,6 +1,8 @@
 from typing import BinaryIO, Any, Union
 import base64
 import mimetypes
+import tempfile
+import os
 from ._exiftool import exiftool_metadata
 from .._base_converter import DocumentConverter, DocumentConverterResult
 from .._stream_info import StreamInfo
@@ -79,10 +81,60 @@ class ImageConverter(DocumentConverter):
 
             if llm_description is not None:
                 md_content += "\n# Description:\n" + llm_description.strip() + "\n"
+        else:
+            # Fall back to nano-banana if available and no llm_client is configured
+            nano_banana_description = self._get_nano_banana_description(
+                file_stream,
+                stream_info,
+                prompt=kwargs.get("llm_prompt"),
+            )
+            if nano_banana_description is not None:
+                md_content += "\n# Description:\n" + nano_banana_description.strip() + "\n"
 
         return DocumentConverterResult(
             markdown=md_content,
         )
+
+    def _get_nano_banana_description(
+        self,
+        file_stream: BinaryIO,
+        stream_info: StreamInfo,
+        *,
+        prompt=None,
+    ) -> Union[None, str]:
+        try:
+            from nano_banana import NanoBanana
+        except ImportError:
+            return None
+
+        if prompt is None or prompt.strip() == "":
+            prompt = "Write a detailed caption for this image."
+
+        # Determine file extension for temp file
+        extension = stream_info.extension or ".jpg"
+        if not extension.startswith("."):
+            extension = "." + extension
+
+        cur_pos = file_stream.tell()
+        try:
+            image_bytes = file_stream.read()
+        except Exception:
+            return None
+        finally:
+            file_stream.seek(cur_pos)
+
+        # nano-banana works with file paths, so write to a temp file
+        with tempfile.NamedTemporaryFile(suffix=extension, delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+
+        try:
+            client = NanoBanana()
+            return client.analyze(tmp_path, question=prompt)
+        except Exception:
+            return None
+        finally:
+            os.unlink(tmp_path)
 
     def _get_llm_description(
         self,
